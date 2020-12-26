@@ -13,6 +13,7 @@ namespace lsv
     void Cmos2Sop(Graph* mos_net, bool isNmos);
     void Search(Node* x, Node * t, Graph* mos_net ,std::vector<std::vector<Node*>>* all_path, std::vector<Node*>* path, std::vector<Node*>* seen);
     bool Stuck(Node* x, Node * t, Graph* mos_net , std::vector<Node*>* seen);
+    void printPath(std::vector<Node*> path);
 }
 
 #endif

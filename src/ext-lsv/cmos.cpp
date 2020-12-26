@@ -85,6 +85,7 @@ void Cmos2Sop(Graph* mos_net, bool isNmos)
     // source and sink
     Node *s = mos_net->gnd();
     Node *t = mos_net->out();
+    path.push_back(s);
 
     // Search all path
     Search(s, t, mos_net ,&all_path, &path, &seen);
@@ -97,36 +98,76 @@ void Cmos2Sop(Graph* mos_net, bool isNmos)
 
 void Search(Node* x, Node * t, Graph* mos_net ,std::vector<std::vector<Node*>>* all_path, std::vector<Node*>* path, std::vector<Node*>* seen)
 {
-    //mos_net->dump();
+    //char temp[256];
+    //path->push_back(x);
     if (x->idx == t->idx) {
+        std::cout << "----terminate----\n";
         all_path->push_back(*path);
+        printPath(*path);
+        return;
     }
-
-    *seen = *path;
+    
+    seen->clear();
+    for (Node *n:*path) {
+        seen->push_back(n);
+    }
+    //printf("Seen: ");
+    //printPath(*seen);
 
     if (Stuck(x, t, mos_net, seen)) return;
-
-    for (Node* n: x->neighbors) {
-        std::cout << "x neighbor: " << n->idx << std::endl;
-        path->push_back(n);
-        Search(n, t, mos_net , all_path, path, seen);
-        path->pop_back();
+    //std::cout << "----test----\n";
+    for (Node *n: x->neighbors) {
+        //std::cout << "x neighbor: " << n->idx << std::endl;
+        if (std::count(path->begin(), path->end(), n) == 0) {
+            path->push_back(n);
+            //std::cout << "----Search Begin----\n";
+            //printPath(*path);
+            Search(n, t, mos_net , all_path, path, seen);
+            //std::cin.get(temp,256);
+            //std::cout << "----Search End----\n";
+            //printPath(*path);
+            path->pop_back();
+            //printPath(*path);
+            //std::cin >> temp;
+        }
     }
 
 }
 
 bool Stuck(Node* x, Node * t, Graph* mos_net , std::vector<Node*>* seen)
 {
+    //printf("-----stuck---\n");
+    //std::cout << "stuck n: " << x->idx << std::endl; 
     if (x->idx == t->idx) return false;
+    //printf("Seen: ");
+    //printPath(*seen);
 
-    for (Node* n: x->neighbors) {
-        if (std::count(seen->begin(), seen->end(), n)) {
+    for (Node* n:x->neighbors) {
+        bool isSeen = false;
+        //std::cout << "x neighbor: " << n->idx << std::endl;
+        for (Node *s:*seen) {
+            //std::cout << "s: " << s->idx << ", n: " << n->idx << std::endl;
+            if (s->idx == n->idx) {
+                //printf("QQ\n");
+                isSeen = true;
+                break;
+            }
+        }
+        if (!isSeen){
             seen->push_back(n);
             if (! Stuck(n, t, mos_net, seen)) return false;
         }
     }
-    
+    printf("TRUE\n"); 
     return true;
+}
+
+void printPath(std::vector<Node*> path)
+{
+    for (Node *n:path) {
+        std::cout << n->idx << " ";       
+    }
+    std::cout << std::endl;
 }
 
 }   /// end of namespace lsv
