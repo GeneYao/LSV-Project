@@ -1,3 +1,16 @@
+# LSV-Project
+tzyysang@gmail.com
+
+geneyao0302@gmail.com
+
+## Development
+Put source code under **src/ext-lsv/**
+
+## Run
+Testcases are in **lsv/project/**
+
+Put test commands inside and run **lsv/project/run.sh**
+
 # LSV-PA
 This is a repository to host programming assignments of the course **Logic Synthesis and Verification** at National Taiwan University.
 It is forked from the repository [ABC](https://github.com/berkeley-abc/abc) of UC Berkeley.
