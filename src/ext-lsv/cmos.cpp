@@ -2,6 +2,7 @@
 #include "ext-lsv/cmos.h"
 #include "ext-lsv/graph.h"
 #include <iostream>
+#include <vector>
 
 namespace lsv
 {
@@ -75,7 +76,29 @@ int CommandCmos2Sop(Abc_Frame_t* pAbc, int argc, char** argv)
 
 void Cmos2Sop(Graph* mos_net, bool isNmos)
 {
-    mos_net->dump();
+    //mos_net->dump();
+    std::vector<std::vector<Node*>> all_path;
+    std::vector<Node*> path;
+    std::vector<Node*> seen;
+
+    // Search all path
+    Search(mos_net ,&all_path, &path, &seen);
+
+    // Turn all path into boolean expression
+
+    // dump blif
+    
+}
+
+void Search(Graph* mos_net ,std::vector<std::vector<Node*>>* all_path, std::vector<Node*>* path, std::vector<Node*>* seen)
+{
+    //mos_net->dump();
+
+}
+
+void Seen(Graph* mos_net , std::vector<Node*>* seen)
+{
+
 }
 
 }   /// end of namespace lsv
