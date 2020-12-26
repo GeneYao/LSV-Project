@@ -50,6 +50,7 @@ static void HelpCommandCmos2Sop()
 int CommandCmos2Sop(Abc_Frame_t* pAbc, int argc, char** argv)
 {
     int c;
+    bool isNmos = false;
     Extra_UtilGetoptReset();
     while ((c = Extra_UtilGetopt(argc, argv, "h")) != EOF) {
     switch (c) {
@@ -62,10 +63,19 @@ int CommandCmos2Sop(Abc_Frame_t* pAbc, int argc, char** argv)
     }
     }
 
+    if (*argv[1] == 'n') isNmos = true;
+
     Graph mos_net(argv[2]);
     mos_net.dump();
 
+    Cmos2Sop(&mos_net, isNmos);
+
     return 0;
+}
+
+void Cmos2Sop(Graph* mos_net, bool isNmos)
+{
+    mos_net->dump();
 }
 
 }   /// end of namespace lsv
