@@ -3,6 +3,7 @@
 #include "ext-lsv/graph.h"
 #include <iostream>
 #include <vector>
+#include <algorithm>
 
 namespace lsv
 {
@@ -80,9 +81,13 @@ void Cmos2Sop(Graph* mos_net, bool isNmos)
     std::vector<std::vector<Node*>> all_path;
     std::vector<Node*> path;
     std::vector<Node*> seen;
+    
+    // source and sink
+    Node *s = mos_net->gnd();
+    Node *t = mos_net->out();
 
     // Search all path
-    Search(mos_net ,&all_path, &path, &seen);
+    Search(s, t, mos_net ,&all_path, &path, &seen);
 
     // Turn all path into boolean expression
 
@@ -90,15 +95,38 @@ void Cmos2Sop(Graph* mos_net, bool isNmos)
     
 }
 
-void Search(Graph* mos_net ,std::vector<std::vector<Node*>>* all_path, std::vector<Node*>* path, std::vector<Node*>* seen)
+void Search(Node* x, Node * t, Graph* mos_net ,std::vector<std::vector<Node*>>* all_path, std::vector<Node*>* path, std::vector<Node*>* seen)
 {
     //mos_net->dump();
+    if (x->idx == t->idx) {
+        all_path->push_back(*path);
+    }
+
+    *seen = *path;
+
+    if (Stuck(x, t, mos_net, seen)) return;
+
+    for (Node* n: x->neighbors) {
+        std::cout << "x neighbor: " << n->idx << std::endl;
+        path->push_back(n);
+        Search(n, t, mos_net , all_path, path, seen);
+        path->pop_back();
+    }
 
 }
 
-void Seen(Graph* mos_net , std::vector<Node*>* seen)
+bool Stuck(Node* x, Node * t, Graph* mos_net , std::vector<Node*>* seen)
 {
+    if (x->idx == t->idx) return false;
 
+    for (Node* n: x->neighbors) {
+        if (std::count(seen->begin(), seen->end(), n)) {
+            seen->push_back(n);
+            if (! Stuck(n, t, mos_net, seen)) return false;
+        }
+    }
+    
+    return true;
 }
 
 }   /// end of namespace lsv
