@@ -205,10 +205,6 @@ void Graph::slice_by_path()
     Face* new_face = new Face(_faces.size());
     _faces.push_back(new_face);
 
-
-    std::cout << "path = " << path << std::endl;
-    std::cout << "inner_path = " << inner_path << std::endl;
-
     /// remove edges from old face
     for( Edge* e : inner_path )
     {
@@ -402,6 +398,61 @@ void Graph::read_mos_network_no_dup(const char* input_file)
     _out = _nodes[1];
 
     ifs.close();
+}
+
+void Graph::get_dual(std::ofstream& ofs, Edge* edge)
+{
+    if( edge==nullptr ) return;
+    edge->visited=1;
+
+    if( edge->f1->node_idx == -1 ) edge->f1->node_idx = node_idx++;
+    if( edge->f2->node_idx == -1 ) edge->f2->node_idx = node_idx++;
+    if( edge!=_ext_edge )
+    {
+        for( int i=0; i<edge->vars.size(); ++i )
+        {
+            int var = edge->vars[i], n1, n2;
+            if( i==0 )
+                n1 = edge->f1->node_idx;
+            else
+                n1 = extra_node_idx++;
+            if( i==edge->vars.size()-1 )
+                n2 = edge->f2->node_idx;
+            else
+                n2 = extra_node_idx;
+            ofs << "P " << var << " " << n1 << " " << n2 << std::endl;
+        }
+    }
+
+    for( Edge* e : edge->f1->edges )
+    {
+        if( e->visited==0 )
+        {
+            get_dual(ofs, e);
+        }
+    }
+    for( Edge* e : edge->f2->edges )
+    {
+        if( e->visited==0 )
+        {
+            get_dual(ofs, e);
+        }
+    }
+}
+
+void Graph::dump_dual(const char* output_file)
+{
+    std::ofstream ofs(output_file);
+    extra_node_idx = _faces.size();
+    ofs << _faces.size()+contracted_size() << " " << _edges.size()+contracted_size()-1 << std::endl;
+
+    _ext_edge->f1->node_idx = 0;
+    _ext_edge->f2->node_idx = 1;
+    node_idx = 2;
+    clear_edge_visited();
+    get_dual(ofs, _ext_edge);
+
+    ofs.close();
 }
 
 }   /// end of namespace lsv

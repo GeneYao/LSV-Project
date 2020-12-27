@@ -41,8 +41,9 @@ struct Node
 struct Face
 {
     int idx;
+    int node_idx;
     std::list<Edge*> edges;
-    Face(int i=-1) : idx(i) {}
+    Face(int i=-1) : idx(i), node_idx(-1) {}
 };
 
 class Graph
@@ -55,6 +56,7 @@ class Graph
     std::vector<Face*> _faces;
     std::deque<Edge*> path;
     Node *path_front, *path_back;
+    int extra_node_idx, node_idx;
 public:
     Graph()
     {
@@ -100,6 +102,8 @@ public:
     void extend_path();
     void slice_by_path();
     Face* find_face( Node* node, Node* target, Face* current_face, std::deque<Edge*>& path );
+    void dump_dual(const char* output_file);
+    void get_dual(std::ofstream& ofs, Edge* edge);
 
     /// inline shorthands
     void clear_node_visited()
@@ -123,6 +127,15 @@ public:
         clear_node_visited();
         clear_edge_visited();
         path.clear();
+    }
+    int contracted_size()
+    {
+        int size = 0;
+        for( Edge* e : _edges )
+        {
+            size += e->vars.size()-1;
+        }
+        return size;
     }
 };
 

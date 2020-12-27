@@ -39,6 +39,7 @@ int CommandCmosDual(Abc_Frame_t* pAbc, int argc, char** argv)
 
     nmos_net.embed();
     nmos_net.dump();
+    nmos_net.dump_dual(argv[2]);
 
     return 0;
 }
