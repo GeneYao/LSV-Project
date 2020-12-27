@@ -6,12 +6,14 @@ namespace lsv
 
 Node* neighbor(const Node* n, const Edge* e)
 {
+    /// return the opposite neighbor
     if( n==e->n1 ) return e->n2;
     return e->n1;
 }
 
 bool is_neighbor(const Node* n1, const Node* n2)
 {
+    /// check neighbor
     for( Node* n : n1->neighbors )
         if( n==n2 ) return true;
     return false;
@@ -26,11 +28,19 @@ std::ostream& operator<<(std::ostream& os, const Edge* e)
             os << var << " ";
     return os;
 }
-std::ostream& operator<<(std::ostream& os, const std::vector<Edge*> path)
+std::ostream& operator<<(std::ostream& os, const std::deque<Edge*> path)
 {
     for( Edge* e : path )
         os << e << "-- ";
     return os;
+}
+
+Edge* Graph::find_extendable_edge( Node* node )
+{
+    for( Edge* e : node->edges )
+        if( e->visited ==0 ) return e;
+    assert( 0 && "can not find extendable edge");
+    return nullptr;
 }
 
 bool Graph::find_cycle(Node* node)
@@ -60,6 +70,63 @@ bool Graph::find_cycle(Node* node)
     return true;
 }
 
+Face* Graph::find_face( Node* node, Node* target, Face* current_face, std::deque<Edge*>& path )
+{
+    /// find a path from node to target, that all edges belong to the same face
+    if( node==target ) return current_face;
+
+    Face* ret;
+    if( current_face==nullptr )
+    {
+        /// starting node, try all embedded edges
+        for( Edge* e : node->edges )
+        {
+            if( e->visited==1 ) continue;
+            e->visited = 1;
+            if( e->f1!=nullptr )
+            {
+                path.push_back(e);
+                ret = find_face( neighbor(node,e), target, e->f1, path );
+                if( ret!=nullptr ) return ret;
+                path.pop_back();
+            }
+            if( e->f2!=nullptr )
+            {
+                path.push_back(e);
+                ret = find_face( neighbor(node,e), target, e->f2, path );
+                if( ret!=nullptr ) return ret;
+                path.pop_back();
+            }
+            e->visited = 0;
+        }
+    }
+    else
+    {
+        /// follow current_face
+        for( Edge* e : node->edges )
+        {
+            if( e->visited==1 ) continue;
+            e->visited = 1;
+            if( e->f1==current_face )
+            {
+                path.push_back(e);
+                ret = find_face( neighbor(node,e), target, e->f1, path );
+                if( ret!=nullptr ) return ret;
+                path.pop_back();
+            }
+            if( e->f2==current_face )
+            {
+                path.push_back(e);
+                ret = find_face( neighbor(node,e), target, e->f2, path );
+                if( ret!=nullptr ) return ret;
+                path.pop_back();
+            }
+            e->visited = 0;
+        }
+    }
+    return nullptr;
+}
+
 void Graph::initial_face()
 {
     /// initialize two faces by the path
@@ -76,8 +143,87 @@ void Graph::initial_face()
         e->f2 = f2;
         f1->edges.push_back(e);
         f2->edges.push_back(e);
+        e->n1->embedded = 1;
+        e->n2->embedded = 1;
     }
-    path.clear();
+}
+
+void Graph::embed_all_edges()
+{
+    /// for all unembedded edges
+    for( Edge* e : _edges )
+    {
+        if( e->f1 != nullptr ) continue;
+        path.clear();
+        clear_edge_visited();
+
+        e->visited = 1;
+        path.push_back(e);
+        extend_path();
+
+        slice_by_path();
+    }
+}
+
+void Graph::extend_path()
+{
+    /// extended path until its two ends are embedded nodes
+    path_front = path.front()->n1;
+    path_back = path.front()->n2;
+    while( true )
+    {
+        if( path_front->embedded == 0 )
+        {
+            Edge* edge = find_extendable_edge( path_front );
+            edge->visited = 1;
+            path.push_front(edge);
+            path_front->embedded = 1;
+            path_front = neighbor(path_front, edge);
+        }
+        else if( path_back->embedded == 0 )
+        {
+            Edge* edge = find_extendable_edge( path_back );
+            edge->visited = 1;
+            path.push_back(edge);
+            path_back->embedded = 1;
+            path_back = neighbor(path_back, edge);
+        }
+        else
+        {
+            break;
+        }
+    }
+}
+
+void Graph::slice_by_path()
+{
+    /// slice a face into two by the path
+    clear_edge_visited();
+
+    std::deque<Edge*> inner_path;
+    Face* old_face = find_face(path_front, path_back, nullptr, inner_path);
+    Face* new_face = new Face(_faces.size());
+    _faces.push_back(new_face);
+
+
+    std::cout << "path = " << path << std::endl;
+    std::cout << "inner_path = " << inner_path << std::endl;
+
+    /// remove edges from old face
+    for( Edge* e : inner_path )
+    {
+        old_face->edges.remove(e);
+        new_face->edges.push_back(e);
+        if( e->f1 == old_face ) e->f1 = new_face;
+        if( e->f2 == old_face ) e->f2 = new_face;
+    }
+    for( Edge* e : path )
+    {
+        old_face->edges.push_back(e);
+        new_face->edges.push_back(e);
+        e->f1 = old_face;
+        e->f2 = new_face;
+    }
 }
 
 void Graph::embed()
@@ -85,8 +231,8 @@ void Graph::embed()
     /// embed graph onto plane, generate all faces
     reset_workspace();
     find_cycle(_out);
-    std::cout << path << std::endl;
     initial_face();
+    embed_all_edges();
 
 }
 
@@ -196,7 +342,7 @@ void Graph::dump(std::ostream& os)
 
 void Graph::read_mos_network(const char* input_file)
 {
-    std::cout << "read transistor network file : " << input_file << std::endl;
+    std::cout << "read mos netlist : " << input_file << std::endl;
     std::ifstream ifs(input_file);
     assert( ifs.is_open() );
 
@@ -231,7 +377,7 @@ void Graph::read_mos_network(const char* input_file)
 
 void Graph::read_mos_network_no_dup(const char* input_file)
 {
-    std::cout << "read transistor network file : " << input_file << std::endl;
+    std::cout << "read mos netlist : " << input_file << std::endl;
     std::ifstream ifs(input_file);
     assert( ifs.is_open() );
 

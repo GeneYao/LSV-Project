@@ -2,8 +2,8 @@
 #define LSV_GRAPH_H
 
 #include <vector>
+#include <deque>
 #include <list>
-#include <stack>
 #include <iostream>
 #include <fstream>
 #include <cassert>
@@ -32,6 +32,7 @@ struct Node
     /// a node is connected to many transistors
     int idx;
     int visited;
+    int embedded;
     std::vector<Edge*> edges;
     std::vector<Node*> neighbors;
     Node( int i=-1 ) : idx(i) {}
@@ -52,7 +53,8 @@ class Graph
     std::vector<Node*> _nodes;
     std::vector<Edge*> _edges;
     std::vector<Face*> _faces;
-    std::vector<Edge*> path;
+    std::deque<Edge*> path;
+    Node *path_front, *path_back;
 public:
     Graph()
     {
@@ -75,6 +77,7 @@ public:
         for( auto* ptr : _faces ) delete ptr;
     }
 
+    /// access members
     Node* gnd() { return _gnd; }
     Node* out() { return _out; }
     Edge* ext_edge() { return _ext_edge; }
@@ -82,20 +85,32 @@ public:
     std::vector<Edge*>& edges() { return _edges; }
     std::vector<Face*>& faces() { return _faces; }
 
+    /// functions in graph.cpp
     void read_mos_network(const char* input_file);
     void read_mos_network_no_dup(const char* input_file);
     void dump(std::ostream& os=std::cout);
     Edge* find_edge(const Node* n1, const Node* n2);
     Edge* add_edge(int var, Node* n1, Node* n2);
+    Edge* find_extendable_edge( Node* node );
     void add_ext_edge();
     void embed();
     bool find_cycle(Node* node);
     void initial_face();
+    void embed_all_edges();
+    void extend_path();
+    void slice_by_path();
+    Face* find_face( Node* node, Node* target, Face* current_face, std::deque<Edge*>& path );
 
+    /// inline shorthands
     void clear_node_visited()
     {
         for( auto* ptr : _nodes )
             if( ptr ) ptr->visited = 0;
+    }
+    void clear_node_embedded()
+    {
+        for( auto* ptr : _nodes )
+            if( ptr ) ptr->embedded = 0;
     }
     void clear_edge_visited()
     {
@@ -104,13 +119,15 @@ public:
     }
     void reset_workspace()
     {
+        clear_node_embedded();
         clear_node_visited();
         clear_edge_visited();
         path.clear();
     }
 };
 
-std::ostream& operator<<(std::ostream& os, const std::vector<Edge*> path);
+/// utilities
+std::ostream& operator<<(std::ostream& os, const std::deque<Edge*> path);
 std::ostream& operator<<(std::ostream& os, const Edge* e);
 Node* neighbor(const Node* n, const Edge* e);
 bool is_neighbor(const Node* n1, const Node* n2);
