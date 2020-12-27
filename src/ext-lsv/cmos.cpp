@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <fstream>
 
 namespace lsv
 {
@@ -68,20 +69,22 @@ int CommandCmos2Sop(Abc_Frame_t* pAbc, int argc, char** argv)
     if (*argv[1] == 'n') isNmos = true;
 
     Graph mos_net(argv[2]);
-    //mos_net.dump();
+    mos_net.dump();
 
-    Cmos2Sop(&mos_net, isNmos);
+    Cmos2Sop(&mos_net, isNmos, argc, argv);
 
     return 0;
 }
 
-void Cmos2Sop(Graph* mos_net, bool isNmos)
+void Cmos2Sop(Graph* mos_net, bool isNmos, int argc, char** argv)
 {
     //mos_net->dump();
+    char buff[256];
     std::vector<std::vector<Node*>> all_path;
     std::vector<Node*> path;
     std::vector<Node*> seen;
-    
+    std::vector<std::vector<int>> all_edge_path;
+    std::vector<int> edge_path;
     // source and sink
     Node *s = mos_net->gnd();
     Node *t = mos_net->out();
@@ -91,7 +94,7 @@ void Cmos2Sop(Graph* mos_net, bool isNmos)
     Search(s, t, mos_net ,&all_path, &path, &seen);
 
     // Turn all path into boolean expression
-    std::cout << "----print all path ----\n";
+    std::cout << "----print all path (Node) ----\n";
     int i = 0;
     for (auto p: all_path) {
         std::cout << "path " << i << ": ";
@@ -102,7 +105,65 @@ void Cmos2Sop(Graph* mos_net, bool isNmos)
         i++;
     }
 
+    std::cout << "----print all path (Edge) ----\n";
+    int cur_idx, next_idx;
+    std::vector<std::vector<int>> temp;
+    std::vector<std::vector<int>> current_all_path;
+    for (auto p: all_path) {
+        edge_path.clear();
+        current_all_path.clear();
+        for (int i = 0; i < p.size()-1; i++) {
+            cur_idx = p[i]->idx;
+            next_idx = p[i+1]->idx;
+            for (Edge* e: p[i]->edges) {
+                if ((e->n1->idx == cur_idx && e->n2->idx == next_idx) || (e->n2->idx == cur_idx && e->n1->idx == next_idx)) {
+                    if (p[i]->idx == s->idx) {
+                        for (int var : e->vars) {
+                            edge_path.push_back(var);
+                            current_all_path.push_back(edge_path);
+                            edge_path.pop_back();
+                        }
+                    }
+                    else {
+                        temp = current_all_path;
+                        for (auto e_p: temp) {
+                            current_all_path.erase(current_all_path.begin());
+                            for (int var : e->vars) {
+                                e_p.push_back(var);
+                                current_all_path.push_back(e_p);
+                                e_p.pop_back();
+                            }                        
+                        }
+                    } 
+                }
+            }
+        }
+        for (auto p : current_all_path) {
+            all_edge_path.push_back(p);
+        }
+    }
+
+    int count = 0;
+    for (auto e_p: all_edge_path) {
+        std::cout << "path " << count << ": ";
+        for (int e: e_p) {
+            std::cout << e << " ";
+        }
+        std::cout << std::endl;
+        count++;
+    }
+
     // dump blif
+    std::ofstream of;
+    of.open(argv[3]);
+    for (auto e_p: all_edge_path) {
+        of << "path " << count << ": ";
+        for (int e: e_p) {
+            of << e << " ";
+        }
+        of << std::endl;
+        count++;
+    }
     
 }
 
