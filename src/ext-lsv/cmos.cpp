@@ -79,7 +79,7 @@ int CommandCmos2Sop(Abc_Frame_t* pAbc, int argc, char** argv)
 void Cmos2Sop(Graph* mos_net, bool isNmos, int argc, char** argv)
 {
     //mos_net->dump();
-    char buff[256];
+    //char buff[256];
     std::vector<std::vector<Node*>> all_path;
     std::vector<Node*> path;
     std::vector<Node*> seen;
@@ -153,17 +153,78 @@ void Cmos2Sop(Graph* mos_net, bool isNmos, int argc, char** argv)
         count++;
     }
 
+
     // dump blif
     std::ofstream of;
     of.open(argv[3]);
-    for (auto e_p: all_edge_path) {
-        of << "path " << count << ": ";
-        for (int e: e_p) {
-            of << e << " ";
+    of << ".model " << argv[3] << std::endl;
+    of << ".inputs ";
+    for (Edge* e: mos_net->edges()) {
+        for (int var: e->vars) {
+            of << "n" << var << " ";
         }
-        of << std::endl;
-        count++;
     }
+    of << std::endl;
+    of << ".output o" << std::endl;
+    if (isNmos == 1) {
+        count = 0;
+        for (auto e_p: all_edge_path) {
+            of << ".name ";
+            for (int e: e_p) {
+                of << "n" << e << " ";
+            }
+            of << "nn" << count << std::endl;
+            for (int e: e_p) {
+               of << "1";
+            }
+            of << " 1" << std::endl;
+            count++;
+        }
+        count = 0;
+        of << ".name ";
+        for (auto e_p: all_edge_path) {
+            of << "nn" << count << " ";
+            count++;
+        }
+        of << "o" << std::endl;
+        for (int i = 0; i < all_edge_path.size(); i++) {
+            for (int j = 0; j < all_edge_path.size(); j++) {
+                if (i == j) of << "1";
+                else of << "-";
+            }
+            of << " 1" << std::endl;
+        }
+    }
+    else {
+        count = 0;
+        for (auto e_p: all_edge_path) {
+            of << ".name ";
+            for (int e: e_p) {
+                of << "n" << e << " ";
+            }
+            of << "nn" << count << std::endl;
+            for (int i = 0; i < e_p.size(); i++) {
+                for (int j = 0; j < e_p.size(); j++) {
+                    if (i == j) of << "1";
+                    else of << "-";
+                }   
+                of << " 1" << std::endl;
+            }
+            count++;
+        }
+        count = 0;
+        of << ".name ";
+        for (auto e_p: all_edge_path) {
+            of << "nn" << count << " ";
+            count++;
+        }
+        of << "o" << std::endl;
+        for (int i = 0; i < all_edge_path.size(); i++) {
+            of << "1";            
+        }
+        of << " 1" << std::endl;
+    }
+    
     
 }
 
