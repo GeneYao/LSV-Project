@@ -136,9 +136,9 @@ void Cmos2Sop(Graph* mos_net, bool isNmos, int argc, char** argv)
                                 e_p.push_back(var);
                                 current_all_path.push_back(e_p);
                                 e_p.pop_back();
-                            }                        
+                            }
                         }
-                    } 
+                    }
                 }
             }
         }
@@ -178,8 +178,8 @@ void Cmos2Sop(Graph* mos_net, bool isNmos, int argc, char** argv)
                 of << "n" << e << " ";
             }
             of << "nn" << count << std::endl;
-            for (int e: e_p) {
-               of << "1";
+            for (int i=0; i<e_p.size(); ++i) {
+                of << "1";
             }
             of << " 1" << std::endl;
             count++;
@@ -211,7 +211,7 @@ void Cmos2Sop(Graph* mos_net, bool isNmos, int argc, char** argv)
                 for (int j = 0; j < e_p.size(); j++) {
                     if (i == j) of << "1";
                     else of << "-";
-                }   
+                }
                 of << " 1" << std::endl;
             }
             count++;
@@ -224,12 +224,12 @@ void Cmos2Sop(Graph* mos_net, bool isNmos, int argc, char** argv)
         }
         of << "o" << std::endl;
         for (int i = 0; i < all_edge_path.size(); i++) {
-            of << "1";            
+            of << "1";
         }
         of << " 1" << std::endl;
     }
-    
-    
+
+
 }
 
 void Search(Node* x, Node * t, Graph* mos_net ,std::vector<std::vector<Node*>>* all_path, std::vector<Node*>* path, std::vector<Node*>* seen)
@@ -238,7 +238,7 @@ void Search(Node* x, Node * t, Graph* mos_net ,std::vector<std::vector<Node*>>* 
         all_path->push_back(*path);
         return;
     }
-    
+
     seen->clear();
     for (Node *n:*path) {
         seen->push_back(n);
@@ -258,7 +258,7 @@ void Search(Node* x, Node * t, Graph* mos_net ,std::vector<std::vector<Node*>>* 
 bool Stuck(Node* x, Node * t, Graph* mos_net , std::vector<Node*>* seen)
 {
     if (x->idx == t->idx) return false;
-    
+
     for (Node* n:x->neighbors) {
         bool isSeen = false;
         for (Node *s:*seen) {
@@ -272,14 +272,13 @@ bool Stuck(Node* x, Node * t, Graph* mos_net , std::vector<Node*>* seen)
             if (! Stuck(n, t, mos_net, seen)) return false;
         }
     }
-    printf("TRUE\n"); 
     return true;
 }
 
 void printPath(std::vector<Node*> path)
 {
     for (Node *n:path) {
-        std::cout << n->idx << " ";       
+        std::cout << n->idx << " ";
     }
     std::cout << std::endl;
 }
