@@ -165,11 +165,11 @@ void Cmos2Sop(Graph* mos_net, bool isNmos, int argc, char** argv)
         }
     }
     of << std::endl;
-    of << ".output o" << std::endl;
+    of << ".outputs o" << std::endl;
     if (isNmos == 1) {
         count = 0;
         for (auto e_p: all_edge_path) {
-            of << ".name ";
+            of << ".names ";
             for (int e: e_p) {
                 of << "n" << e << " ";
             }
@@ -181,7 +181,7 @@ void Cmos2Sop(Graph* mos_net, bool isNmos, int argc, char** argv)
             count++;
         }
         count = 0;
-        of << ".name ";
+        of << ".names ";
         for (auto e_p: all_edge_path) {
             of << "nn" << count << " ";
             count++;
@@ -198,7 +198,7 @@ void Cmos2Sop(Graph* mos_net, bool isNmos, int argc, char** argv)
     else {
         count = 0;
         for (auto e_p: all_edge_path) {
-            of << ".name ";
+            of << ".names ";
             for (int e: e_p) {
                 of << "n" << e << " ";
             }
@@ -213,7 +213,7 @@ void Cmos2Sop(Graph* mos_net, bool isNmos, int argc, char** argv)
             count++;
         }
         count = 0;
-        of << ".name ";
+        of << ".names ";
         for (auto e_p: all_edge_path) {
             of << "nn" << count << " ";
             count++;
@@ -231,9 +231,7 @@ void Cmos2Sop(Graph* mos_net, bool isNmos, int argc, char** argv)
 void Search(Node* x, Node * t, Graph* mos_net ,std::vector<std::vector<Node*>>* all_path, std::vector<Node*>* path, std::vector<Node*>* seen)
 {
     if (x->idx == t->idx) {
-        //std::cout << "----terminate----\n";
         all_path->push_back(*path);
-        //printPath(*path);
         return;
     }
     
