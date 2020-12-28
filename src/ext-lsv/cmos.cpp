@@ -37,8 +37,12 @@ int CommandCmosDual(Abc_Frame_t* pAbc, int argc, char** argv)
         return 1;
     }
 
-    Graph nmos_net(argv[1],true);
+    Graph nmos_net(argv[1]);
+    nmos_net.add_ext_edge();
+
+    nmos_net.embed();
     nmos_net.dump();
+    nmos_net.dump_dual(argv[2]);
 
     return 0;
 }
