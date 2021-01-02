@@ -67,7 +67,7 @@ bool Graph::find_cycle(Node* node)
             }
         }
     }
-    return true;
+    return false;
 }
 
 Face* Graph::find_face( Node* node, Node* target, Face* current_face, std::deque<Edge*>& path )
@@ -148,7 +148,7 @@ void Graph::initial_face()
     }
 }
 
-void Graph::embed_all_edges()
+bool Graph::embed_all_edges()
 {
     /// for all unembedded edges
     for( Edge* e : _edges )
@@ -161,8 +161,9 @@ void Graph::embed_all_edges()
         path.push_back(e);
         extend_path();
 
-        slice_by_path();
+        if( !slice_by_path() ) return false;
     }
+    return true;
 }
 
 void Graph::extend_path()
@@ -195,13 +196,15 @@ void Graph::extend_path()
     }
 }
 
-void Graph::slice_by_path()
+int Graph::slice_by_path()
 {
     /// slice a face into two by the path
     clear_edge_visited();
 
     std::deque<Edge*> inner_path;
     Face* old_face = find_face(path_front, path_back, nullptr, inner_path);
+    if( old_face==nullptr ) return -1;
+
     Face* new_face = new Face(_faces.size());
     _faces.push_back(new_face);
 
@@ -220,16 +223,18 @@ void Graph::slice_by_path()
         e->f1 = old_face;
         e->f2 = new_face;
     }
+
+    return 0;
 }
 
-void Graph::embed()
+int Graph::embed()
 {
     /// embed graph onto plane, generate all faces
     reset_workspace();
-    find_cycle(_out);
+    if( !find_cycle(_out) ) return -1;
     initial_face();
-    embed_all_edges();
-
+    if( !embed_all_edges() ) return -1;
+    return 0;
 }
 
 Edge* Graph::find_edge(const Node* n1, const Node* n2)

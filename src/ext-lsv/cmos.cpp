@@ -40,10 +40,15 @@ int CommandCmosDual(Abc_Frame_t* pAbc, int argc, char** argv)
     Graph nmos_net(argv[1]);
     nmos_net.add_ext_edge();
 
-    nmos_net.embed();
-    nmos_net.dump();
-    nmos_net.dump_dual(argv[2]);
-
+    if( nmos_net.embed()==0 )
+    {
+        nmos_net.dump();
+        nmos_net.dump_dual(argv[2]);
+    }
+    else
+    {
+        std::cout << "Error: " << argv[1] << " : netlist is non-planar" << std::endl;
+    }
     return 0;
 }
 

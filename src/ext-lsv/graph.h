@@ -95,12 +95,12 @@ public:
     Edge* add_edge(int var, Node* n1, Node* n2);
     Edge* find_extendable_edge( Node* node );
     void add_ext_edge();
-    void embed();
+    int embed();
     bool find_cycle(Node* node);
     void initial_face();
-    void embed_all_edges();
+    bool embed_all_edges();
     void extend_path();
-    void slice_by_path();
+    int slice_by_path();
     Face* find_face( Node* node, Node* target, Face* current_face, std::deque<Edge*>& path );
     void dump_dual(const char* output_file);
     void get_dual(std::ofstream& ofs, Edge* edge);
