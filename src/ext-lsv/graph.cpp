@@ -161,7 +161,7 @@ bool Graph::embed_all_edges()
         path.push_back(e);
         extend_path();
 
-        if( !slice_by_path() ) return false;
+        if( slice_by_path()!=0 ) return false;
     }
     return true;
 }

@@ -43,6 +43,7 @@ int CommandCmosDual(Abc_Frame_t* pAbc, int argc, char** argv)
 
     Graph nmos_net(argv[1]);
     nmos_net.add_ext_edge();
+        nmos_net.dump();
 
     if( nmos_net.embed()==0 )
     {
@@ -135,7 +136,7 @@ void GenRandomGraphs(int vertex_num, int edge_num, bool isNmos, int argc, char**
                 adj_mat[i][j] = 0;
             }
         }
-        int edge_num_temp = edge_num;   
+        int edge_num_temp = edge_num;
         while (edge_num_temp > 0) {
             for (int i = 0; i < n; i++) {
                 for (int j = i + 1; j < n; j++) {
@@ -147,7 +148,7 @@ void GenRandomGraphs(int vertex_num, int edge_num, bool isNmos, int argc, char**
                 }
             }
         }
-        
+
         // find non even comllumn
         int nonevenCount;
         bool evenDegree = true;
@@ -165,33 +166,33 @@ void GenRandomGraphs(int vertex_num, int edge_num, bool isNmos, int argc, char**
         if (evenDegree == false) continue;
         /*
         // fix all non even collumn to even collumn
-        int temp = 0; 
+        int temp = 0;
         for (int i = 0; i < nonEvenColumnidx.size(); i = i + 2) {
             for (int j = 0; j < n; j++) {
                 if (adj_mat[nonEvenColumnidx[i]][j] > 0) {
                     temp = adj_mat[nonEvenColumnidx[i]][j];
-                    adj_mat[nonEvenColumnidx[i]][j] = 0; 
+                    adj_mat[nonEvenColumnidx[i]][j] = 0;
                     adj_mat[j][nonEvenColumnidx[i]] = 0;
                     break;
                 }
             }
             for (int j = 0; j < n; j++) {
                 if (nonEvenColumnidx[i+1] != j && adj_mat[nonEvenColumnidx[i+1]][j] == 0) {
-                    adj_mat[nonEvenColumnidx[i+1]][j] += temp; 
+                    adj_mat[nonEvenColumnidx[i+1]][j] += temp;
                     adj_mat[j][nonEvenColumnidx[i+1]] += temp;
                     break;
                 }
             }
         }
         */
-        
+
         // check connectivity
         std::vector<bool> visited(n, false);
         std::vector<int> q;
         q.push_back(0);
 
        visited[0] = true;
-    
+
         int vis;
         while (!q.empty()) {
             vis = q[0];
@@ -228,17 +229,17 @@ void GenRandomGraphs(int vertex_num, int edge_num, bool isNmos, int argc, char**
     }
     std::ofstream of;
     of.open(argv[4]);
-    
+
     of << n << " " << edge_num << std::endl;
     int edge_iter = 1;
     for (int i = 0; i < n; i++) {
-        for (int j = i; j < n; j++) {   
+        for (int j = i; j < n; j++) {
             for (int k = 0; k < adj_mat[i][j]; k++) {
                 (isNmos) ? of << "N " : of << "P ";
-                of << edge_iter << " " << i << " " << j << "\n";    
-                edge_iter++;                
+                of << edge_iter << " " << i << " " << j << "\n";
+                edge_iter++;
             }
-        
+
         }
     }
 }
