@@ -159,13 +159,15 @@ void GenRandomGraphs(int vertex_num, int max_degree, int argc, char** argv)
         }
     }
     std::cout << std::endl << std::setw(3) << " ";
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < n; i++) {
         std::cout << std::setw(3) << "(" << i << ")";
-        std::cout << std::endl << std::endl;
+    }
+    std::cout << std::endl << std::endl;
     for (int i = 0; i < n; i++) {
         std::cout << std::setw(4) << "(" << i << ")";
-    for (int j = 0; j < n; j++)
-        std::cout << std::setw(5) << adj_mat[i][j];
+        for (int j = 0; j < n; j++) {
+            std::cout << std::setw(5) << adj_mat[i][j];
+        }
         std::cout << std::endl;
     }
     /*
