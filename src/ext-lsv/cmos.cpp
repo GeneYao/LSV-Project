@@ -6,6 +6,8 @@
 #include <vector>
 #include <algorithm>
 #include <fstream>
+#include <iomanip>
+#include <numeric>
 
 namespace lsv
 {
@@ -88,7 +90,7 @@ int CommandCmos2Sop(Abc_Frame_t* pAbc, int argc, char** argv)
 
 static void HelpCommandCmosGraphGen()
 {
-    Abc_Print(-2, "usage: lsv_cmos_graph_gen [vertex_num] output_file\n");
+    Abc_Print(-2, "usage: lsv_cmos_graph_gen [vertex_num] [max_degree] output_file\n");
     Abc_Print(-2, "\t       generate ramdom graph for cmos netlist\n");
     Abc_Print(-2, "\t-h    : print the command usage\n");
 }
@@ -108,19 +110,65 @@ int CommandCmosGraphGen(Abc_Frame_t* pAbc, int argc, char** argv)
     }
     }
 
-    int e, n;
+    int d, n;
     std::cout<<"Random graph generation: ";
     n= strtol(argv[1], NULL, 10);
     std::cout<<"\nThe graph has "<<n<<" vertices";
-    e = rand()%((n*(n-1))/2);
-    std::cout<<"\nand has "<<e<<" edges.\n";
-    GenRandomGraphs(e, n, argc, argv);
+    d = strtol(argv[2], NULL, 10);
+    std::cout<<"\nand each vertex has maximum " << d <<" degrees.\n";
+    GenRandomGraphs(n, d, argc, argv);
 
     return 0;
 }
 
-void GenRandomGraphs(int edge_num, int vertex_num, int argc, char** argv)
+void GenRandomGraphs(int vertex_num, int max_degree, int argc, char** argv)
 {
+    std::vector<std::vector<int>> adj_mat(vertex_num, std::vector<int>(vertex_num));
+    std::vector<int> vertex_degree(vertex_num);
+    int d = 0, n = vertex_num;
+    for (int i = 0; i < n; i++) {
+        d = max_degree; // 2;
+        vertex_degree[i] = rand()%d;
+        if (vertex_degree[i] % 2 == 1) {
+            vertex_degree[i] += 1;
+        }
+        if (vertex_degree[i] == 0) {
+            vertex_degree[i] = 2;
+        }
+    }
+    std::cout << "vertex_degree: "; 
+    for (int i = 0; i < n; i++) {
+        std::cout << vertex_degree[i] << " ";
+    }
+    std::cout << std::endl;
+    for(int i = 0; i<n; i++) {
+        for(int j = 0; j < n; j++){
+            adj_mat[i][j] = 0;
+        }
+    }
+    while (std::accumulate(vertex_degree.begin(), vertex_degree.end(), 0) > 0) {
+    //while (vertex_degree[i] > 0 && vertex_degree[j] > 0) {
+    //for (int k = 0; k < max_degree / vertex_num + 1; k++) {
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                if (rand() % 100 > 50 && vertex_degree[i] > 0 && vertex_degree[j] > 0) {
+                    vertex_degree[i]--; vertex_degree[j]--;
+                    adj_mat[i][j] += 1; adj_mat[j][i] += 1;
+                }
+            }
+        }
+    }
+    std::cout << std::endl << std::setw(3) << " ";
+    for (int i = 0; i < n; i++)
+        std::cout << std::setw(3) << "(" << i << ")";
+        std::cout << std::endl << std::endl;
+    for (int i = 0; i < n; i++) {
+        std::cout << std::setw(4) << "(" << i << ")";
+    for (int j = 0; j < n; j++)
+        std::cout << std::setw(5) << adj_mat[i][j];
+        std::cout << std::endl;
+    }
+    /*
     int i, j, edge[edge_num][2], count;
     i = 0;
     //Assign random values to the number of vertex and edges of the graph, Using rand().
@@ -160,6 +208,7 @@ void GenRandomGraphs(int edge_num, int vertex_num, int argc, char** argv)
       }
       std::cout<<" }\n";
    }
+   */ 
 }
 
 void Cmos2Sop(Graph* mos_net, bool isNmos, int argc, char** argv)
