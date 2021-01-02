@@ -108,9 +108,58 @@ int CommandCmosGraphGen(Abc_Frame_t* pAbc, int argc, char** argv)
     }
     }
 
-    //CmosGraphGen(&mos_net, isNmos, argc, argv);
+    int e, n;
+    std::cout<<"Random graph generation: ";
+    n= strtol(argv[1], NULL, 10);
+    std::cout<<"\nThe graph has "<<n<<" vertices";
+    e = rand()%((n*(n-1))/2);
+    std::cout<<"\nand has "<<e<<" edges.\n";
+    GenRandomGraphs(e, n, argc, argv);
 
     return 0;
+}
+
+void GenRandomGraphs(int edge_num, int vertex_num, int argc, char** argv)
+{
+    int i, j, edge[edge_num][2], count;
+    i = 0;
+    //Assign random values to the number of vertex and edges of the graph, Using rand().
+    while(i < edge_num) {
+        edge[i][0] = rand()%vertex_num+1;
+        edge[i][1] = rand()%vertex_num+1;
+        //Print the connections of each vertex, irrespective of the direction.
+        if(edge[i][0] == edge[i][1])
+            continue;
+        else {
+            for(j = 0; j < i; j++) {
+                if((edge[i][0] == edge[j][0] &&
+                edge[i][1] == edge[j][1]) || (edge[i][0] == edge[j][1] &&
+                edge[i][1] == edge[j][0]))
+                i--;
+            }
+        } 
+        i++;
+    }
+    std::cout<<"\nThe generated random graph is: ";
+    for(i = 0; i < vertex_num; i++) {
+        count = 0;
+        std::cout<<"\n\t"<<i+1<<"-> { ";
+        for(j = 0; j < edge_num; j++) {
+            if(edge[j][0] == i+1)
+            {
+                std::cout<<edge[j][1]<<" ";
+                count++;
+            } 
+            else if(edge[j][1] == i+1)
+            {
+                std::cout<<edge[j][0]<<" ";
+                count++;
+            } 
+            else if(j== edge_num-1 && count == 0)
+                std::cout<<"Isolated Vertex!"; //Print “Isolated vertex” for the vertex having no degree.
+      }
+      std::cout<<" }\n";
+   }
 }
 
 void Cmos2Sop(Graph* mos_net, bool isNmos, int argc, char** argv)
