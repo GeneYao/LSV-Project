@@ -1,6 +1,7 @@
 
 #include "ext-lsv/cmos.h"
 #include "ext-lsv/graph.h"
+#include <stdlib.h>
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -81,6 +82,33 @@ int CommandCmos2Sop(Abc_Frame_t* pAbc, int argc, char** argv)
     mos_net.dump();
 
     Cmos2Sop(&mos_net, isNmos, argc, argv);
+
+    return 0;
+}
+
+static void HelpCommandCmosGraphGen()
+{
+    Abc_Print(-2, "usage: lsv_cmos_graph_gen [vertex_num] output_file\n");
+    Abc_Print(-2, "\t       generate ramdom graph for cmos netlist\n");
+    Abc_Print(-2, "\t-h    : print the command usage\n");
+}
+
+int CommandCmosGraphGen(Abc_Frame_t* pAbc, int argc, char** argv)
+{
+    int c;
+    Extra_UtilGetoptReset();
+    while ((c = Extra_UtilGetopt(argc, argv, "h")) != EOF) {
+    switch (c) {
+        case 'h':
+            HelpCommandCmosGraphGen();
+            return 1;
+        default:
+            HelpCommandCmosGraphGen();
+            return 1;
+    }
+    }
+
+    //CmosGraphGen(&mos_net, isNmos, argc, argv);
 
     return 0;
 }

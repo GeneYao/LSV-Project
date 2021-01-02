@@ -7,6 +7,7 @@ void init(Abc_Frame_t* pAbc)
 {
     Cmd_CommandAdd(pAbc, "LSV", "lsv_cmos_dual", lsv::CommandCmosDual, 0);
     Cmd_CommandAdd(pAbc, "LSV", "lsv_cmos2sop", lsv::CommandCmos2Sop, 0);
+    Cmd_CommandAdd(pAbc, "LSV", "lsv_cmos_graph_gen", lsv::CommandCmosGraphGen, 0);
 }
 
 void destroy(Abc_Frame_t* pAbc) {}
