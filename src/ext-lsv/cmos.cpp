@@ -139,10 +139,7 @@ void GenRandomGraphs(int vertex_num, int edge_num, bool isNmos, int argc, char**
         while (edge_num_temp > 0) {
             for (int i = 0; i < n; i++) {
                 for (int j = i + 1; j < n; j++) {
-                    //srand(time(NULL));
                     int rand_num = rand() % 2;
-                    //std::cout << rand_num << "\n";
-                    //std::cout << vertex_degree[i] << " " << vertex_degree[j] << "\n";
                     if (rand_num == 1 && edge_num_temp > 0) {
                         edge_num_temp--;
                         adj_mat[i][j] += 1; adj_mat[j][i] += 1;
@@ -162,7 +159,6 @@ void GenRandomGraphs(int vertex_num, int edge_num, bool isNmos, int argc, char**
             }
             if (nonevenCount%2 == 1) {
                 evenDegree = false;//nonEvenColumnidx.push_back(i);
-                //printf("QQ\n");
                 break;
             }
         }
