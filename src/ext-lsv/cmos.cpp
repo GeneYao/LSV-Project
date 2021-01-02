@@ -90,7 +90,7 @@ int CommandCmos2Sop(Abc_Frame_t* pAbc, int argc, char** argv)
 
 static void HelpCommandCmosGraphGen()
 {
-    Abc_Print(-2, "usage: lsv_cmos_graph_gen [vertex_num] [max_degree] output_file\n");
+    Abc_Print(-2, "usage: lsv_cmos_graph_gen [vertex_num] [max_degree] [n/p] output_file\n");
     Abc_Print(-2, "\t       generate ramdom graph for cmos netlist\n");
     Abc_Print(-2, "\t-h    : print the command usage\n");
 }
@@ -98,6 +98,7 @@ static void HelpCommandCmosGraphGen()
 int CommandCmosGraphGen(Abc_Frame_t* pAbc, int argc, char** argv)
 {
     int c;
+    bool isNmos = false;
     Extra_UtilGetoptReset();
     while ((c = Extra_UtilGetopt(argc, argv, "h")) != EOF) {
     switch (c) {
@@ -109,19 +110,19 @@ int CommandCmosGraphGen(Abc_Frame_t* pAbc, int argc, char** argv)
             return 1;
     }
     }
-
+    if (*argv[3] == 'n') isNmos = true;
     int d, n;
     std::cout<<"Random graph generation: ";
     n= strtol(argv[1], NULL, 10);
     std::cout<<"\nThe graph has "<<n<<" vertices";
     d = strtol(argv[2], NULL, 10);
     std::cout<<"\nand each vertex has maximum " << d <<" degrees.\n";
-    GenRandomGraphs(n, d, argc, argv);
+    GenRandomGraphs(n, d, isNmos, argc, argv);
 
     return 0;
 }
 
-void GenRandomGraphs(int vertex_num, int max_degree, int argc, char** argv)
+void GenRandomGraphs(int vertex_num, int max_degree, bool isNmos, int argc, char** argv)
 {
     std::vector<std::vector<int>> adj_mat(vertex_num, std::vector<int>(vertex_num));
     std::vector<int> vertex_degree(vertex_num);
@@ -169,6 +170,26 @@ void GenRandomGraphs(int vertex_num, int max_degree, int argc, char** argv)
             std::cout << std::setw(5) << adj_mat[i][j];
         }
         std::cout << std::endl;
+    }
+    std::ofstream of;
+    of.open(argv[4]);
+    int edge_count = 0;
+    for (int i = 0; i < n; i++) {
+        for (int j = i; j < n; j++) {
+            edge_count += adj_mat[i][j];
+        }
+    }
+    of << n << " " << edge_count << std::endl;
+    int edge_num = 1;
+    for (int i = 0; i < n; i++) {
+        for (int j = i; j < n; j++) {   
+            for (int k = 0; k < adj_mat[i][j]; k++) {
+                (isNmos) ? of << "N " : of << "P ";
+                of << edge_num << " " << i << " " << j << "\n";    
+                edge_num++;                
+            }
+        
+        }
     }
     /*
     int i, j, edge[edge_num][2], count;
