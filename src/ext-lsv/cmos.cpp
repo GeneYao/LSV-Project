@@ -8,6 +8,7 @@
 #include <fstream>
 #include <iomanip>
 #include <numeric>
+#include <time.h>
 
 namespace lsv
 {
@@ -90,7 +91,7 @@ int CommandCmos2Sop(Abc_Frame_t* pAbc, int argc, char** argv)
 
 static void HelpCommandCmosGraphGen()
 {
-    Abc_Print(-2, "usage: lsv_cmos_graph_gen [vertex_num] [max_degree] [n/p] output_file\n");
+    Abc_Print(-2, "usage: lsv_cmos_graph_gen [vertex_num] [edge_num] [n/p] output_file\n");
     Abc_Print(-2, "\t       generate ramdom graph for cmos netlist\n");
     Abc_Print(-2, "\t-h    : print the command usage\n");
 }
@@ -111,54 +112,112 @@ int CommandCmosGraphGen(Abc_Frame_t* pAbc, int argc, char** argv)
     }
     }
     if (*argv[3] == 'n') isNmos = true;
-    int d, n;
+    int e, n;
     std::cout<<"Random graph generation: ";
     n= strtol(argv[1], NULL, 10);
     std::cout<<"\nThe graph has "<<n<<" vertices";
-    d = strtol(argv[2], NULL, 10);
-    std::cout<<"\nand each vertex has maximum " << d <<" degrees.\n";
-    GenRandomGraphs(n, d, isNmos, argc, argv);
+    e = strtol(argv[2], NULL, 10);
+    std::cout<<"\nand has " << e <<" edges.\n";
+    GenRandomGraphs(n, e, isNmos, argc, argv);
 
     return 0;
 }
 
-void GenRandomGraphs(int vertex_num, int max_degree, bool isNmos, int argc, char** argv)
+void GenRandomGraphs(int vertex_num, int edge_num, bool isNmos, int argc, char** argv)
 {
-    std::vector<std::vector<int>> adj_mat(vertex_num, std::vector<int>(vertex_num));
-    std::vector<int> vertex_degree(vertex_num);
-    int d = 0, n = vertex_num;
-    for (int i = 0; i < n; i++) {
-        d = max_degree; // 2;
-        vertex_degree[i] = rand()%d;
-        if (vertex_degree[i] % 2 == 1) {
-            vertex_degree[i] += 1;
-        }
-        if (vertex_degree[i] == 0) {
-            vertex_degree[i] = 2;
-        }
-    }
-    std::cout << "vertex_degree: "; 
-    for (int i = 0; i < n; i++) {
-        std::cout << vertex_degree[i] << " ";
-    }
-    std::cout << std::endl;
-    for(int i = 0; i<n; i++) {
-        for(int j = 0; j < n; j++){
-            adj_mat[i][j] = 0;
-        }
-    }
-    while (std::accumulate(vertex_degree.begin(), vertex_degree.end(), 0) > 0) {
-    //while (vertex_degree[i] > 0 && vertex_degree[j] > 0) {
-    //for (int k = 0; k < max_degree / vertex_num + 1; k++) {
+    srand(time(NULL));
+    int n = vertex_num;
+    bool isConnect = false;
+    std::vector<std::vector<int>> adj_mat(vertex_num, std::vector<int>(vertex_num, 0));
+    while (isConnect == false) {
         for (int i = 0; i < n; i++) {
-            for (int j = i + 1; j < n; j++) {
-                if (rand() % 100 > 50 && vertex_degree[i] > 0 && vertex_degree[j] > 0) {
-                    vertex_degree[i]--; vertex_degree[j]--;
-                    adj_mat[i][j] += 1; adj_mat[j][i] += 1;
+            for (int j = 0; j < n; j++) {
+                adj_mat[i][j] = 0;
+            }
+        }
+        int edge_num_temp = edge_num;   
+        while (edge_num_temp > 0) {
+            for (int i = 0; i < n; i++) {
+                for (int j = i + 1; j < n; j++) {
+                    //srand(time(NULL));
+                    int rand_num = rand() % 2;
+                    //std::cout << rand_num << "\n";
+                    //std::cout << vertex_degree[i] << " " << vertex_degree[j] << "\n";
+                    if (rand_num == 1 && edge_num_temp > 0) {
+                        edge_num_temp--;
+                        adj_mat[i][j] += 1; adj_mat[j][i] += 1;
+                    }
                 }
             }
         }
+        
+        // find non even comllumn
+        int nonevenCount;
+        bool evenDegree = true;
+        //std::vector<int> nonEvenColumnidx;
+        for (int i = 0; i < n; i++) {
+            nonevenCount = 0;
+            for (int j = 0; j < n; j++) {
+                if (adj_mat[i][j] > 0) nonevenCount++;
+            }
+            if (nonevenCount%2 == 1) {
+                evenDegree = false;//nonEvenColumnidx.push_back(i);
+                //printf("QQ\n");
+                break;
+            }
+        }
+        if (evenDegree == false) continue;
+        /*
+        // fix all non even collumn to even collumn
+        int temp = 0; 
+        for (int i = 0; i < nonEvenColumnidx.size(); i = i + 2) {
+            for (int j = 0; j < n; j++) {
+                if (adj_mat[nonEvenColumnidx[i]][j] > 0) {
+                    temp = adj_mat[nonEvenColumnidx[i]][j];
+                    adj_mat[nonEvenColumnidx[i]][j] = 0; 
+                    adj_mat[j][nonEvenColumnidx[i]] = 0;
+                    break;
+                }
+            }
+            for (int j = 0; j < n; j++) {
+                if (nonEvenColumnidx[i+1] != j && adj_mat[nonEvenColumnidx[i+1]][j] == 0) {
+                    adj_mat[nonEvenColumnidx[i+1]][j] += temp; 
+                    adj_mat[j][nonEvenColumnidx[i+1]] += temp;
+                    break;
+                }
+            }
+        }
+        */
+        
+        // check connectivity
+        std::vector<bool> visited(n, false);
+        std::vector<int> q;
+        q.push_back(0);
+
+       visited[0] = true;
+    
+        int vis;
+        while (!q.empty()) {
+            vis = q[0];
+            // Print the current node
+            q.erase(q.begin());
+            // For every adjacent vertex to the current vertex
+            for (int i = 0; i < n; i++) {
+                if (adj_mat[vis][i] == 1 && (!visited[i])) {
+                    // Push the adjacent node to the queue
+                    q.push_back(i);
+                    // Set
+                    visited[i] = true;
+                }
+            }
+        }
+        int connected_count = 0;
+        for (int i = 0; i < n; i++) {
+            if (visited[i] == true) connected_count++;
+        }
+        if (n == connected_count) isConnect = true;
     }
+
     std::cout << std::endl << std::setw(3) << " ";
     for (int i = 0; i < n; i++) {
         std::cout << std::setw(3) << "(" << i << ")";
@@ -173,65 +232,19 @@ void GenRandomGraphs(int vertex_num, int max_degree, bool isNmos, int argc, char
     }
     std::ofstream of;
     of.open(argv[4]);
-    int edge_count = 0;
-    for (int i = 0; i < n; i++) {
-        for (int j = i; j < n; j++) {
-            edge_count += adj_mat[i][j];
-        }
-    }
-    of << n << " " << edge_count << std::endl;
-    int edge_num = 1;
+    
+    of << n << " " << edge_num << std::endl;
+    int edge_iter = 1;
     for (int i = 0; i < n; i++) {
         for (int j = i; j < n; j++) {   
             for (int k = 0; k < adj_mat[i][j]; k++) {
                 (isNmos) ? of << "N " : of << "P ";
-                of << edge_num << " " << i << " " << j << "\n";    
-                edge_num++;                
+                of << edge_iter << " " << i << " " << j << "\n";    
+                edge_iter++;                
             }
         
         }
     }
-    /*
-    int i, j, edge[edge_num][2], count;
-    i = 0;
-    //Assign random values to the number of vertex and edges of the graph, Using rand().
-    while(i < edge_num) {
-        edge[i][0] = rand()%vertex_num+1;
-        edge[i][1] = rand()%vertex_num+1;
-        //Print the connections of each vertex, irrespective of the direction.
-        if(edge[i][0] == edge[i][1])
-            continue;
-        else {
-            for(j = 0; j < i; j++) {
-                if((edge[i][0] == edge[j][0] &&
-                edge[i][1] == edge[j][1]) || (edge[i][0] == edge[j][1] &&
-                edge[i][1] == edge[j][0]))
-                i--;
-            }
-        } 
-        i++;
-    }
-    std::cout<<"\nThe generated random graph is: ";
-    for(i = 0; i < vertex_num; i++) {
-        count = 0;
-        std::cout<<"\n\t"<<i+1<<"-> { ";
-        for(j = 0; j < edge_num; j++) {
-            if(edge[j][0] == i+1)
-            {
-                std::cout<<edge[j][1]<<" ";
-                count++;
-            } 
-            else if(edge[j][1] == i+1)
-            {
-                std::cout<<edge[j][0]<<" ";
-                count++;
-            } 
-            else if(j== edge_num-1 && count == 0)
-                std::cout<<"Isolated Vertex!"; //Print “Isolated vertex” for the vertex having no degree.
-      }
-      std::cout<<" }\n";
-   }
-   */ 
 }
 
 void Cmos2Sop(Graph* mos_net, bool isNmos, int argc, char** argv)
