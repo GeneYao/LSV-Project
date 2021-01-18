@@ -109,11 +109,14 @@ public:
     int slice_by_path();
     Face* find_face( Node* node, Node* target, Face* current_face, std::deque<Edge*>& path );
     void dump_dual(const char* output_file);
+    void dump_graph(const char* output_file);
     void get_dual(std::ofstream& ofs, Edge* edge);
 
-    int gen_random_graph( int n );
+    int gen_random_graph( int n, double ratio = 0.5 );
     void subdivision( int edge_var );
+    void add_random_edge( int edge_var );
     Edge* get_random_edge();
+    Node* get_random_node();
     void delete_edge_from_node( Node* n, Edge* e );
     void delete_neighbor_from_node( Node* n, Node* nb );
 

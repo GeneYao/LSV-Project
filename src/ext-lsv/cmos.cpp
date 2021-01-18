@@ -43,11 +43,9 @@ int CommandCmosDual(Abc_Frame_t* pAbc, int argc, char** argv)
 
     Graph nmos_net(argv[1]);
     nmos_net.add_ext_edge();
-        nmos_net.dump();
 
     if( nmos_net.embed()==0 )
     {
-        nmos_net.dump();
         nmos_net.dump_dual(argv[2]);
     }
     else
@@ -83,7 +81,7 @@ int CommandCmos2Sop(Abc_Frame_t* pAbc, int argc, char** argv)
     if (*argv[1] == 'n') isNmos = true;
 
     Graph mos_net(argv[2]);
-    mos_net.dump();
+    //mos_net.dump();
 
     Cmos2Sop(&mos_net, isNmos, argc, argv);
 
@@ -99,7 +97,7 @@ static void HelpCommandCmosGraphGen()
 
 static void HelpCommandCmosGraphGen2()
 {
-    Abc_Print(-2, "usage: lsv_cmos_graph_gen2 [vertex_num] output_file\n");
+    Abc_Print(-2, "usage: lsv_cmos_graph_gen2 [output_file] [vertex_num] [ratio] \n");
     Abc_Print(-2, "\t       generate ramdom mos netlist\n");
     Abc_Print(-2, "\t-h    : print the command usage\n");
 }
@@ -153,11 +151,16 @@ int CommandCmosGraphGen2(Abc_Frame_t* pAbc, int argc, char** argv)
     }
 
     std::cout << "Random graph generation 2 :" << std::endl;
-    int n = atoi(argv[1]);
+    int n = atoi(argv[2]);
     std::cout <<"  # of vertices = " << n << std::endl;
+    double ratio = 0.5;
+    if( argc >= 4 ) ratio = atof(argv[3]);
+    std::cout <<"  ratio = " << ratio << std::endl;
 
     Graph g(true);
-    g.gen_random_graph( n );
+    g.gen_random_graph( n, ratio );
+    std::cout << "dump netlist to " << argv[1] << std::endl;
+    g.dump_graph( argv[1] );
 
     return 0;
 }

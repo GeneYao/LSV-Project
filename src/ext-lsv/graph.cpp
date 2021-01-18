@@ -48,7 +48,7 @@ bool Graph::find_cycle(Node* node)
     /// find a cycle through _out, put in path vector
     if( node )
     {
-        if( node==_out && path.size()>2  )
+        if( node==_out && path.size()>=2  )
         {
             return true;
         }
@@ -61,6 +61,8 @@ bool Graph::find_cycle(Node* node)
             node->visited = 1;
             for( Edge* e : node->edges )
             {
+                if( e->visited==true ) continue;
+                e->visited = true;
                 path.push_back(e);
                 if( find_cycle( neighbor(node, e) ) ) return true;
                 path.pop_back();
@@ -283,6 +285,17 @@ Edge* Graph::add_edge(int var, Node* n1, Node* n2)
             n2->edges.push_back(e);
             n2->neighbors.push_back(n1);
         }
+        else
+        {
+            e = new Edge(n1,n2);
+            e->var = var;
+            _edges.push_back(e);
+            /// update node connectivity
+            n1->edges.push_back(e);
+            n1->neighbors.push_back(n2);
+            n2->edges.push_back(e);
+            n2->neighbors.push_back(n1);
+        }
         return e;
     }
 }
@@ -290,6 +303,7 @@ Edge* Graph::add_edge(int var, Node* n1, Node* n2)
 void Graph::add_ext_edge()
 {
     assert( _gnd!=nullptr && _out!=nullptr );
+
     _ext_edge = new Edge(_out,_gnd);
     _ext_edge->vars.push_back(0);
 
@@ -481,6 +495,20 @@ void Graph::dump_dual(const char* output_file)
     ofs.close();
 }
 
+void Graph::dump_graph(const char* output_file)
+{
+    assert( _is_multi_edge==1 );
+    std::ofstream ofs(output_file);
+    ofs << _nodes.size() << " " << _edges.size() << std::endl;
+
+    for( Edge* e : _edges )
+    {
+        ofs << "N " << e->var << " " << e->n1->idx << " " << e->n2->idx << std::endl;
+    }
+
+    ofs.close();
+}
+
 Node* Graph::new_node()
 {
     Node* n = new Node(_nodes.size());
@@ -492,6 +520,12 @@ Edge* Graph::get_random_edge()
 {
     if( _edges.size()==0 ) return nullptr;
     return _edges[ rand()%_edges.size() ];
+}
+
+Node* Graph::get_random_node()
+{
+    if( _nodes.size()==0 ) return nullptr;
+    return _nodes[ rand()%_nodes.size() ];
 }
 
 void Graph::delete_edge_from_node( Node* n, Edge* e )
@@ -518,6 +552,19 @@ void Graph::delete_neighbor_from_node( Node* n, Node* nb )
     }
 }
 
+void Graph::add_random_edge( int edge_var )
+{
+    assert( _nodes.size() >= 2 && "At least 2 nodes requred to add a random edge" );
+    Node *n1=nullptr, *n2=nullptr;
+    while( n1==n2 )
+    {
+        n1 = get_random_node();
+        n2 = get_random_node();
+    }
+    std::cout << "random edge " << n1->idx << ", " << n2->idx << std::endl;
+    add_edge(edge_var,n1,n2);
+}
+
 void Graph::subdivision( int edge_var )
 {
     Node* n = new_node();
@@ -527,7 +574,7 @@ void Graph::subdivision( int edge_var )
 
     Node* n1 = e1->n1;
     Node* n2 = e1->n2;
-    Edge* e2 = add_edge(edge_var,n,n2);
+    add_edge(edge_var,n,n2);
     e1->n2 = n;
 
     n->edges.push_back(e1);
@@ -539,7 +586,7 @@ void Graph::subdivision( int edge_var )
     delete_neighbor_from_node(n2,n1);
 }
 
-int Graph::gen_random_graph( int n )
+int Graph::gen_random_graph( int n, double ratio )
 {
     if( (int)_nodes.size() != 0 ) return -1;
 
@@ -548,23 +595,24 @@ int Graph::gen_random_graph( int n )
     _out = new_node();
     add_edge( edge_var++, _gnd, _out );
 
-    const double ratio = 0.5;
-
-    dump();
+    if( ratio > 1.0 || ratio <= 0.0 ) ratio = 0.5;
 
     std::srand( std::time(NULL) );
-    while( (int)_nodes.size() < n )
+    while( (int)_nodes.size() <= n )
     {
         double x = (double)rand() / (RAND_MAX + 1.0);
+        //double x = (double)_nodes.size() / (double)_edges.size();
+
         if( x < ratio )
         {
+            if( (int)_nodes.size() == n ) break;
             subdivision(edge_var++);
-            dump();
+        }
+        else
+        {
+            add_random_edge(edge_var++);
         }
     }
-
-    dump();
     return _edges.size();
 }
-
 }   /// end of namespace lsv
