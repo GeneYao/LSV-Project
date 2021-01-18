@@ -247,24 +247,44 @@ Edge* Graph::find_edge(const Node* n1, const Node* n2)
 
 Edge* Graph::add_edge(int var, Node* n1, Node* n2)
 {
-    /// add new edge (non-dup edge style)
-    Edge* e = find_edge(n1, n2);
-    if( e )
+    if( _is_multi_edge == 0 )
     {
-        e->vars.push_back(var);
+        /// add new edge (non-dup edge style)
+        Edge* e = find_edge(n1, n2);
+        if( e )
+        {
+            e->vars.push_back(var);
+        }
+        else
+        {
+            e = new Edge(n1,n2);
+            e->vars.push_back(var);
+            _edges.push_back(e);
+            /// update node connectivity
+            n1->edges.push_back(e);
+            n1->neighbors.push_back(n2);
+            n2->edges.push_back(e);
+            n2->neighbors.push_back(n1);
+        }
+        return e;
     }
     else
     {
-        e = new Edge(n1,n2);
-        e->vars.push_back(var);
-        _edges.push_back(e);
-        /// update node connectivity
-        n1->edges.push_back(e);
-        n1->neighbors.push_back(n2);
-        n2->edges.push_back(e);
-        n2->neighbors.push_back(n1);
+        /// add new edge, multi edge style
+        Edge* e = find_edge(n1, n2);
+        if( e==nullptr )
+        {
+            e = new Edge(n1,n2);
+            e->var = var;
+            _edges.push_back(e);
+            /// update node connectivity
+            n1->edges.push_back(e);
+            n1->neighbors.push_back(n2);
+            n2->edges.push_back(e);
+            n2->neighbors.push_back(n1);
+        }
+        return e;
     }
-    return e;
 }
 
 void Graph::add_ext_edge()
@@ -286,6 +306,7 @@ void Graph::add_ext_edge()
 
 void Graph::dump(std::ostream& os)
 {
+    os << "multi-edged : " << (_is_multi_edge?"true":"false") << std::endl;
     os << "node: edges" << std::endl;
     for( Node* n : _nodes )
     {
@@ -458,6 +479,92 @@ void Graph::dump_dual(const char* output_file)
     get_dual(ofs, _ext_edge);
 
     ofs.close();
+}
+
+Node* Graph::new_node()
+{
+    Node* n = new Node(_nodes.size());
+    _nodes.push_back(n);
+    return n;
+}
+
+Edge* Graph::get_random_edge()
+{
+    if( _edges.size()==0 ) return nullptr;
+    return _edges[ rand()%_edges.size() ];
+}
+
+void Graph::delete_edge_from_node( Node* n, Edge* e )
+{
+    for( auto ite=n->edges.begin(); ite!=n->edges.end(); ite++ )
+    {
+        if( (*ite)==e )
+        {
+            n->edges.erase( ite );
+            break;
+        }
+    }
+}
+
+void Graph::delete_neighbor_from_node( Node* n, Node* nb )
+{
+    for( auto ite=n->neighbors.begin(); ite!=n->neighbors.end(); ite++ )
+    {
+        if( (*ite)==nb )
+        {
+            n->neighbors.erase( ite );
+            break;
+        }
+    }
+}
+
+void Graph::subdivision( int edge_var )
+{
+    Node* n = new_node();
+    Edge* e1 = get_random_edge();
+
+    std::cout << "subdivision " << e1 << std::endl;
+
+    Node* n1 = e1->n1;
+    Node* n2 = e1->n2;
+    Edge* e2 = add_edge(edge_var,n,n2);
+    e1->n2 = n;
+
+    n->edges.push_back(e1);
+    n->neighbors.push_back(n1);
+    delete_edge_from_node( n2, e1 );
+
+    delete_neighbor_from_node(n1,n2);
+    n1->neighbors.push_back(n);
+    delete_neighbor_from_node(n2,n1);
+}
+
+int Graph::gen_random_graph( int n )
+{
+    if( (int)_nodes.size() != 0 ) return -1;
+
+    int edge_var = 1;
+    _gnd = new_node();
+    _out = new_node();
+    add_edge( edge_var++, _gnd, _out );
+
+    const double ratio = 0.5;
+
+    dump();
+
+    std::srand( std::time(NULL) );
+    while( (int)_nodes.size() < n )
+    {
+        double x = (double)rand() / (RAND_MAX + 1.0);
+        if( x < ratio )
+        {
+            subdivision(edge_var++);
+            dump();
+        }
+    }
+
+    dump();
+    return _edges.size();
 }
 
 }   /// end of namespace lsv

@@ -97,6 +97,13 @@ static void HelpCommandCmosGraphGen()
     Abc_Print(-2, "\t-h    : print the command usage\n");
 }
 
+static void HelpCommandCmosGraphGen2()
+{
+    Abc_Print(-2, "usage: lsv_cmos_graph_gen2 [vertex_num] output_file\n");
+    Abc_Print(-2, "\t       generate ramdom mos netlist\n");
+    Abc_Print(-2, "\t-h    : print the command usage\n");
+}
+
 int CommandCmosGraphGen(Abc_Frame_t* pAbc, int argc, char** argv)
 {
     int c;
@@ -120,6 +127,37 @@ int CommandCmosGraphGen(Abc_Frame_t* pAbc, int argc, char** argv)
     e = strtol(argv[2], NULL, 10);
     std::cout<<"\nand has " << e <<" edges.\n";
     GenRandomGraphs(n, e, isNmos, argc, argv);
+
+    return 0;
+}
+
+int CommandCmosGraphGen2(Abc_Frame_t* pAbc, int argc, char** argv)
+{
+    int c;
+    Extra_UtilGetoptReset();
+    while ((c = Extra_UtilGetopt(argc, argv, "h")) != EOF) {
+    switch (c) {
+        case 'h':
+            HelpCommandCmosGraphGen2();
+            return 1;
+        default:
+            HelpCommandCmosGraphGen2();
+            return 1;
+    }
+    }
+
+    if( argc < 3 )
+    {
+        HelpCommandCmosGraphGen2();
+        return 1;
+    }
+
+    std::cout << "Random graph generation 2 :" << std::endl;
+    int n = atoi(argv[1]);
+    std::cout <<"  # of vertices = " << n << std::endl;
+
+    Graph g(true);
+    g.gen_random_graph( n );
 
     return 0;
 }

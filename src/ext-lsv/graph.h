@@ -7,6 +7,8 @@
 #include <iostream>
 #include <fstream>
 #include <cassert>
+#include <cstdlib>
+#include <ctime>
 
 namespace lsv
 {
@@ -57,15 +59,18 @@ class Graph
     std::deque<Edge*> path;
     Node *path_front, *path_back;
     int extra_node_idx, node_idx;
+    int _is_multi_edge;
 public:
-    Graph()
+    Graph( int dup_edge=0 )
     {
         _gnd = nullptr;
         _out = nullptr;
         _ext_edge = nullptr;
+        _is_multi_edge = dup_edge;
     }
     Graph(char* input_file, bool dup_edge=false)
     {
+        _is_multi_edge = dup_edge;
         if( dup_edge )
             /// allow duplicated edges
             read_mos_network(input_file);
@@ -91,6 +96,7 @@ public:
     void read_mos_network(const char* input_file);
     void read_mos_network_no_dup(const char* input_file);
     void dump(std::ostream& os=std::cout);
+    Node* new_node();
     Edge* find_edge(const Node* n1, const Node* n2);
     Edge* add_edge(int var, Node* n1, Node* n2);
     Edge* find_extendable_edge( Node* node );
@@ -104,6 +110,12 @@ public:
     Face* find_face( Node* node, Node* target, Face* current_face, std::deque<Edge*>& path );
     void dump_dual(const char* output_file);
     void get_dual(std::ofstream& ofs, Edge* edge);
+
+    int gen_random_graph( int n );
+    void subdivision( int edge_var );
+    Edge* get_random_edge();
+    void delete_edge_from_node( Node* n, Edge* e );
+    void delete_neighbor_from_node( Node* n, Node* nb );
 
     /// inline shorthands
     void clear_node_visited()
