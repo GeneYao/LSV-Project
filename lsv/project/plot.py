@@ -9,7 +9,8 @@ else:
     print('Usage: plot.py netlist.nmos')
     exit()
 
-G = nx.Graph()
+#G = nx.Graph()
+G = nx.MultiGraph()
 
 file = open(file_name, 'r')
 
@@ -28,6 +29,7 @@ for line in file:
         G.add_edge(n1,n2)
     line_num = line_num + 1
 
+print(num_v,'vertices,',num_e,'edges')
 print( list(G.nodes) )
 print( list(G.edges) )
 

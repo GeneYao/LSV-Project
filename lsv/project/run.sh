@@ -10,5 +10,4 @@
 ../../abc -c "lsv_cmos2sop n test.nmos test_n.blif"
 ../../abc -c "lsv_cmos2sop p test.output test_p.blif"
 ../../abc -c "cec test_n.blif test_p.blif"
-
-#python3 plot.py test.nmos
+#python3 plot.py test.output
