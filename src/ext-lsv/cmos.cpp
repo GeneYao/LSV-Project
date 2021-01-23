@@ -301,7 +301,7 @@ void Cmos2Sop(Graph* mos_net, bool isNmos, int argc, char** argv)
 
     // Search all path
     Search(s, t, mos_net ,&all_path, &path, &seen);
-
+    /*
     // Turn all path into boolean expression
     std::cout << "----print all path (Node) ----\n";
     int i = 0;
@@ -313,6 +313,7 @@ void Cmos2Sop(Graph* mos_net, bool isNmos, int argc, char** argv)
         std::cout << std::endl;
         i++;
     }
+    */
 
     std::cout << "----print all path (Edge) ----\n";
     int cur_idx, next_idx;
@@ -353,6 +354,7 @@ void Cmos2Sop(Graph* mos_net, bool isNmos, int argc, char** argv)
     }
 
     int count = 0;
+        /*
     for (auto e_p: all_edge_path) {
         std::cout << "path " << count << ": ";
         for (int e: e_p) {
@@ -361,7 +363,7 @@ void Cmos2Sop(Graph* mos_net, bool isNmos, int argc, char** argv)
         std::cout << std::endl;
         count++;
     }
-
+    */
 
     // dump blif
     std::ofstream of;
