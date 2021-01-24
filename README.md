@@ -3,78 +3,75 @@ tzyysang@gmail.com
 
 geneyao0302@gmail.com
 
-## Development
-Put source code under **src/ext-lsv/**
+This is a repository of final project of the course **Logic Synthesis and Verification** at National Taiwan University.
+It is cloned from https://github.com/NTU-ALComLab/LSV-PA
+
+## Source Code
+Source code are in **src/ext-lsv/**  
+ABC_commnad interfaces are in **cmos.cpp**  
+Major functions are in **graph.cpp**  
+
+## How to comple
+Please follow the standard make flow as in the LSV-PA, that is,
+```
+[LSV-project]$ make
+```
 
 ## Run
-Testcases are in **lsv/project/**
+Testcases and example runme script are in **lsv/project/**
 
-Put test commands inside and run **lsv/project/run.sh**
-
-# LSV-PA
-This is a repository to host programming assignments of the course **Logic Synthesis and Verification** at National Taiwan University.
-It is forked from the repository [ABC](https://github.com/berkeley-abc/abc) of UC Berkeley.
-
-## Submission Workflow
-We will follow a common [git feature branch workflow](https://www.atlassian.com/git/tutorials/comparing-workflows/feature-branch-workflow) for submission.
-Programming assignments **must** be submitted via a pull request to a student's branch.
-All enrolled students will have their own branches named by their students' ID numbers.
-If you cannot find your own branch, please contact the TA.
-If you don't know how to create a pull request, please read through this [document](https://guides.github.com/activities/forking/).
-
-We will allocate a period of time for submission.
-Outside the submission period this repository will be locked down: it will not accept any pull request.
-You **must** create a pull request during the submission period.
-
-### To avoid plagiarism ...
-Please note that your fork of this public repository will also be public,
-which means that if you push your code to the fork, it is visible to everyone.
-In case you want to prevent other students from copying your solution,
-an easy way is to push and create a pull request at the last moment before the deadline.
-
-Another complicated way is to create a private repository to develop your solutions,
-pull your code to the public fork after an assignment is finished,
-and create a pull request via the public fork.
-The benefit of this method is that you can push your code during the development and keep it private.
-The drawback is again you need to create a pull request close to the deadline, as PRs are visible to everyone.
-The detailed steps are documented [here](./private-fork.md).
-
-## Assignments
-### PA0
-Topic: Getting familiar with git and GitHub
-
-Task: Fill in your GitHub Account in this [table](./lsv/admin/participants-id.csv) via a pull request to the **master** branch.
-
-Deadline: 2020.09.30
-
-### [PA1](./lsv/pa1/README.md)
-Topic: Unateness checking of SOP for a node
-
-Submission period:
-- Parts 1 and 2: 2020/10/15 11:00-13:00
-- Part 3: 2020/10/29 11:00-13:00
-
-### [PA2](./lsv/pa2/README.md)
-Topic: Unateness checking of global PI/PO
-
-Submission period: 2020/12/10 11:00-13:00
-
-#### Evaluation
-For PA1 and PA2, your submissions will be evaluated over [The EPFL Combinational Benchmark Suite](https://www.epfl.ch/labs/lsi/page-102566-en-html/benchmarks/).
-You can clone the benchmarks from this [repository](https://github.com/lsils/benchmarks) and create a symbolic link in your PA folder.
-
+An example runme script is in lsv/project
 ```
-~$ git clone git@github.com:lsils/benchmarks.git EPFL-benchmark-suite
-~$ cd LSV-PA
-~/LSV-PA$ ln -s ~/EPFL-benchmark-suite ./benchmarks
+[LSV-project/lsv/project]$ source run.sh
 ```
 
-## Participants
-We recommend students to register their student IDs and GitHub accounts in this [table](./lsv/admin/participants-id.csv).
+It runs 1) planar netlist test, 2) nonplanar netlist test, 3) graph generation test
 
-## Contact
-TA: Nian-Ze Lee (d04943019@ntu.edu.tw)
+All implemented functions are incapsulated as ABC commands.
 
-For questions, you are encouraged to open an [issue](https://github.com/NTU-ALComLab/LSV-PA/issues).
-As other students might have the same questions, discussing in an issue will benefit everyone.
-Note that you can set labels, e.g., `PA0`, `PA1`, etc, to classify your questions.
+#### Generate new transistor netlist
+```
+#### example usage
+abc> lsv_cmos_graph_gen2 test.nmos 6 0.6
+```
+test.nmos: output file name, generated netlist will be dumped into this file  
+6: number of nodes in netlist, n >= 3  
+0.6: vertex/edge ratio, 0 < r <= 1  
+
+```
+#### example outputs
+Random graph generation 2 :
+  # of vertices = 10
+  ratio = 0.6
+subdivision 1
+subdivision 1
+subdivision 2
+subdivision 4
+random edge 2, 1
+subdivision 6
+subdivision 7
+random edge 3, 6
+subdivision 4
+random edge 0, 1
+subdivision 10
+random edge 3, 1
+dump netlist to test.nmos
+```
+
+#### Dual network generation
+```
+abc> lsv_cmos_dual test.nmos test.output
+```
+test.nmos: input netlist
+test.out: output netlist
+
+#### Equivalence checking
+```
+abc> lsv_cmos2sop n test.nmos nmos.blif
+abc> lsv_cmos2sop p pmos.output pmos.blif
+abc> cec nmos.blif pmos.blif
+```
+
+The command lsv_cmos2sop convert our netlist to SOP/POS format with path enumaration algorithm.
+Then cec is used to compare the two netlists.
+
