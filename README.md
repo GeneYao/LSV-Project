@@ -1,7 +1,6 @@
 # LSV-Project
-tzyysang@gmail.com
-
-geneyao0302@gmail.com
+tzyysang@gmail.com  
+geneyao0302@gmail.com  
 
 This is a repository of final project of the course **Logic Synthesis and Verification** at National Taiwan University.
 It is cloned from https://github.com/NTU-ALComLab/LSV-PA
@@ -11,7 +10,7 @@ Source code are in **src/ext-lsv/**
 ABC_commnad interfaces are in **cmos.cpp**  
 Major functions are in **graph.cpp**  
 
-## How to comple
+## How to compile
 Please follow the standard make flow as in the LSV-PA, that is,
 ```
 [LSV-project]$ make
