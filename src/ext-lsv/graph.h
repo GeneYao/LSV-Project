@@ -98,6 +98,7 @@ public:
     void dump(std::ostream& os=std::cout);
     Node* new_node();
     Edge* find_edge(const Node* n1, const Node* n2);
+    Edge* find_edge(int i);
     Edge* add_edge(int var, Node* n1, Node* n2);
     Edge* find_extendable_edge( Node* node );
     void add_ext_edge();
@@ -111,6 +112,7 @@ public:
     void dump_dual(const char* output_file);
     void dump_graph(const char* output_file);
     void get_dual(std::ofstream& ofs, Edge* edge);
+    void dump_dual_nonplanar(const char* output_file, const std::vector<std::vector<int>>& all_edge_path);
 
     int gen_random_graph( int n, double ratio = 0.5 );
     void subdivision( int edge_var );

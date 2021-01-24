@@ -247,6 +247,18 @@ Edge* Graph::find_edge(const Node* n1, const Node* n2)
     return nullptr;
 }
 
+Edge* Graph::find_edge(int i)
+{
+    /// check if edge (n1,n2) exists
+    for( Edge* e : _edges )
+    {
+        if( e->var == i ) return e;
+        for( int var : e->vars )
+            if( var==i ) return e;
+    }
+    return nullptr;
+}
+
 Edge* Graph::add_edge(int var, Node* n1, Node* n2)
 {
     if( _is_multi_edge == 0 )
@@ -491,6 +503,46 @@ void Graph::dump_dual(const char* output_file)
     node_idx = 2;
     clear_edge_visited();
     get_dual(ofs, _ext_edge);
+
+    ofs.close();
+}
+
+void Graph::dump_dual_nonplanar(const char* output_file, const std::vector<std::vector<int>>& all_edge_path)
+{
+    std::ofstream ofs(output_file);
+    int node_idx = 2;
+
+    int num_v = 2, num_e = 0;
+    for(auto& e_p: all_edge_path)
+    {
+        if( e_p.size()==1 && e_p[0]==0 ) continue;  /// the external edge
+        for( int i=0; i<e_p.size(); i++ )
+        {
+            num_v++;
+            num_e++;
+        }
+        num_v = num_v - 1;
+    }
+    ofs << num_v << " " << num_e << std::endl;
+
+    for (auto& e_p: all_edge_path)
+    {
+        if( e_p.size()==1 && e_p[0]==0 ) continue;  /// the external edge
+        for( int i=0; i<e_p.size(); i++ )
+        {
+            int var = e_p[i];
+            ofs << "N " << var << " ";
+            if( i==0 )
+                ofs << "1 ";
+            else
+                ofs << node_idx++ << " ";
+
+            if( i==e_p.size()-1 )
+                ofs << "0" << std::endl;
+            else
+                ofs << node_idx << std::endl;
+        }
+    }
 
     ofs.close();
 }

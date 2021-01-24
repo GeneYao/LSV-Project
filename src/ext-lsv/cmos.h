@@ -16,6 +16,7 @@ namespace lsv
     void Search(Node* x, Node * t, Graph* mos_net ,std::vector<std::vector<Node*>>* all_path, std::vector<Node*>* path, std::vector<Node*>* seen);
     bool Stuck(Node* x, Node * t, Graph* mos_net , std::vector<Node*>* seen);
     void printPath(std::vector<Node*> path);
+    void ToEdgePaths( Graph* mos_net, const std::vector<std::vector<Node*>>& all_path, std::vector<std::vector<int>>& all_edge_path );
     void GenRandomGraphs(int vertex_num, int edge_num, bool isNmos, int argc, char** argv);
 }
 

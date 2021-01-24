@@ -50,7 +50,22 @@ int CommandCmosDual(Abc_Frame_t* pAbc, int argc, char** argv)
     }
     else
     {
-        std::cout << "Error: " << argv[1] << " : netlist is non-planar" << std::endl;
+        std::cout << argv[1] << " : netlist is non-planar" << std::endl;
+
+        std::vector<std::vector<Node*>> all_path;
+        std::vector<Node*> path;
+        std::vector<Node*> seen;
+        std::vector<std::vector<int>> all_edge_path;
+        std::vector<int> edge_path;
+        // source and sink
+        Node *s = nmos_net.gnd();
+        Node *t = nmos_net.out();
+        path.push_back(s);
+
+        // Search all path
+        Search(s, t, &nmos_net ,&all_path, &path, &seen);
+        ToEdgePaths(&nmos_net, all_path, all_edge_path);
+        nmos_net.dump_dual_nonplanar(argv[2], all_edge_path);
     }
     return 0;
 }
@@ -205,27 +220,6 @@ void GenRandomGraphs(int vertex_num, int edge_num, bool isNmos, int argc, char**
             }
         }
         if (evenDegree == false) continue;
-        /*
-        // fix all non even collumn to even collumn
-        int temp = 0;
-        for (int i = 0; i < nonEvenColumnidx.size(); i = i + 2) {
-            for (int j = 0; j < n; j++) {
-                if (adj_mat[nonEvenColumnidx[i]][j] > 0) {
-                    temp = adj_mat[nonEvenColumnidx[i]][j];
-                    adj_mat[nonEvenColumnidx[i]][j] = 0;
-                    adj_mat[j][nonEvenColumnidx[i]] = 0;
-                    break;
-                }
-            }
-            for (int j = 0; j < n; j++) {
-                if (nonEvenColumnidx[i+1] != j && adj_mat[nonEvenColumnidx[i+1]][j] == 0) {
-                    adj_mat[nonEvenColumnidx[i+1]][j] += temp;
-                    adj_mat[j][nonEvenColumnidx[i+1]] += temp;
-                    break;
-                }
-            }
-        }
-        */
 
         // check connectivity
         std::vector<bool> visited(n, false);
@@ -301,85 +295,37 @@ void Cmos2Sop(Graph* mos_net, bool isNmos, int argc, char** argv)
 
     // Search all path
     Search(s, t, mos_net ,&all_path, &path, &seen);
-    /*
-    // Turn all path into boolean expression
-    std::cout << "----print all path (Node) ----\n";
-    int i = 0;
-    for (auto p: all_path) {
-        std::cout << "path " << i << ": ";
-        for (Node *n: p) {
-            std::cout << n->idx << " ";
-        }
-        std::cout << std::endl;
-        i++;
-    }
-    */
-
-    std::cout << "----print all path (Edge) ----\n";
-    int cur_idx, next_idx;
-    std::vector<std::vector<int>> temp;
-    std::vector<std::vector<int>> current_all_path;
-    for (auto p: all_path) {
-        edge_path.clear();
-        current_all_path.clear();
-        for (int i = 0; i < p.size()-1; i++) {
-            cur_idx = p[i]->idx;
-            next_idx = p[i+1]->idx;
-            for (Edge* e: p[i]->edges) {
-                if ((e->n1->idx == cur_idx && e->n2->idx == next_idx) || (e->n2->idx == cur_idx && e->n1->idx == next_idx)) {
-                    if (p[i]->idx == s->idx) {
-                        for (int var : e->vars) {
-                            edge_path.push_back(var);
-                            current_all_path.push_back(edge_path);
-                            edge_path.pop_back();
-                        }
-                    }
-                    else {
-                        temp = current_all_path;
-                        for (auto e_p: temp) {
-                            current_all_path.erase(current_all_path.begin());
-                            for (int var : e->vars) {
-                                e_p.push_back(var);
-                                current_all_path.push_back(e_p);
-                                e_p.pop_back();
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        for (auto p : current_all_path) {
-            all_edge_path.push_back(p);
-        }
-    }
+    ToEdgePaths(mos_net, all_path, all_edge_path);
 
     int count = 0;
-        /*
-    for (auto e_p: all_edge_path) {
-        std::cout << "path " << count << ": ";
-        for (int e: e_p) {
-            std::cout << e << " ";
-        }
-        std::cout << std::endl;
-        count++;
-    }
-    */
-
     // dump blif
     std::ofstream of;
     of.open(argv[3]);
     of << ".model " << argv[3] << std::endl;
     of << ".inputs ";
+
+    std::vector<int> used_inputs;
     for (Edge* e: mos_net->edges()) {
         for (int var: e->vars) {
-            of << "n" << var << " ";
+            bool used = false;
+            for( int i: used_inputs )
+            {
+                if( i == var ) used = true;
+            }
+            if( !used ){
+                used_inputs.push_back(var);
+            }
         }
+    }
+    for( int i=0; i<used_inputs.size(); ++i )
+    {
+        of << "n" << i+1 << " ";
     }
     of << std::endl;
     of << ".outputs o" << std::endl;
     if (isNmos == 1) {
         count = 0;
-        for (auto e_p: all_edge_path) {
+        for (auto& e_p: all_edge_path) {
             of << ".names ";
             for (int e: e_p) {
                 of << "n" << e << " ";
@@ -393,7 +339,7 @@ void Cmos2Sop(Graph* mos_net, bool isNmos, int argc, char** argv)
         }
         count = 0;
         of << ".names ";
-        for (auto e_p: all_edge_path) {
+        for (auto& e_p: all_edge_path) {
             of << "nn" << count << " ";
             count++;
         }
@@ -408,7 +354,7 @@ void Cmos2Sop(Graph* mos_net, bool isNmos, int argc, char** argv)
     }
     else {
         count = 0;
-        for (auto e_p: all_edge_path) {
+        for (auto& e_p: all_edge_path) {
             of << ".names ";
             for (int e: e_p) {
                 of << "n" << e << " ";
@@ -425,7 +371,7 @@ void Cmos2Sop(Graph* mos_net, bool isNmos, int argc, char** argv)
         }
         count = 0;
         of << ".names ";
-        for (auto e_p: all_edge_path) {
+        for (auto& e_p: all_edge_path) {
             of << "nn" << count << " ";
             count++;
         }
@@ -459,7 +405,49 @@ void Search(Node* x, Node * t, Graph* mos_net ,std::vector<std::vector<Node*>>* 
             path->pop_back();
         }
     }
+}
 
+void ToEdgePaths( Graph* mos_net, const std::vector<std::vector<Node*>>& all_path, std::vector<std::vector<int>>& all_edge_path )
+{
+    int cur_idx, next_idx;
+    std::vector<std::vector<int>> temp;
+    std::vector<std::vector<int>> current_all_path;
+    std::vector<int> edge_path;
+    Node* s = mos_net->gnd();
+
+    for (auto p: all_path) {
+        edge_path.clear();
+        current_all_path.clear();
+        for (int i = 0; i < p.size()-1; i++) {
+            cur_idx = p[i]->idx;
+            next_idx = p[i+1]->idx;
+            for (Edge* e: p[i]->edges) {
+                if ((e->n1->idx == cur_idx && e->n2->idx == next_idx) || (e->n2->idx == cur_idx && e->n1->idx == next_idx)) {
+                    if (p[i]->idx == s->idx) {
+                        for (int var : e->vars) {
+                            edge_path.push_back(var);
+                            current_all_path.push_back(edge_path);
+                            edge_path.pop_back();
+                        }
+                    }
+                    else {
+                        temp = current_all_path;
+                        for (auto e_p: temp) {
+                            current_all_path.erase(current_all_path.begin());
+                            for (int var : e->vars) {
+                                e_p.push_back(var);
+                                current_all_path.push_back(e_p);
+                                e_p.pop_back();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        for (auto p : current_all_path) {
+            all_edge_path.push_back(p);
+        }
+    }
 }
 
 bool Stuck(Node* x, Node * t, Graph* mos_net , std::vector<Node*>* seen)
