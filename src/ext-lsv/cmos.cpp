@@ -175,6 +175,7 @@ int CommandCmosGraphGen2(Abc_Frame_t* pAbc, int argc, char** argv)
     Graph g(true);
     g.gen_random_graph( n, ratio );
     std::cout << "dump netlist to " << argv[1] << std::endl;
+	g.dump();
     g.dump_graph( argv[1] );
 
     return 0;
